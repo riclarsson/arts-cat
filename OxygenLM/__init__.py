@@ -9,21 +9,7 @@ def run(ws, working_dir, show_diff):
     ws.isotopologue_ratiosInitFromBuiltin()
     pyarts.cat.linemixing.init_ecs(ws)
     
-    upp = pyarts.classes.QuantumNumbers.QuantumNumbers()
-    upp["S"] = 1
-    upp["Lambda"] = 0
-    upp["v1"] = 0
-    upp["ElectronState"] = 88
-    low = pyarts.classes.QuantumNumbers.QuantumNumbers()
-    low["S"] = 1
-    low["Lambda"] = 0
-    low["v1"] = 0
-    low["ElectronState"] = 88
-    qn = pyarts.classes.QuantumIdentifier()
-    qn.low = low
-    qn.upp = upp
-    qn.type = "Transition"
-    qn.spec_ind = pyarts.classes.SpeciesTag("O2-66").isot.index
+    qid = pyarts.classes.QuantumIdentifier('O2-66 S 1 1 Lambda 0 0 v 0 0 ElecStateLabel X X')
     
     orig_fn = os.path.join(working_dir, "O2-66.xml")
     assert os.path.exists(orig_fn), f"Cannot find> {orig_fn}"
@@ -34,7 +20,7 @@ def run(ws, working_dir, show_diff):
         ws.create_variable("ArrayOfAbsorptionLines", 'abs_lines_tmp__')
     ws.Copy(ws.abs_lines_tmp__, ws.abs_lines)
     
-    pyarts.cat.select.select(ws, ws.abs_lines_tmp__, qn, 40e9, 130e9, 0)
+    pyarts.cat.select.select(ws, ws.abs_lines_tmp__, qid, 40e9, 130e9, 0)
     ws.abs_linesSetPopulation(ws.abs_lines_tmp__, "ByMakarovFullRelmat")
     print("Adapting oxygen band with ", len(ws.abs_lines_tmp__.value[0].lines), " lines")
     

@@ -4,27 +4,42 @@ import os
 import pyarts
 import argparse
 import importlib
-import ReadHitran
+import Hitran
+
+def check_done_or_return_step(steps):
+    if len(steps) == 0:
+        print("No more steps")
+        exit(0)
+    return steps.pop(0)
+
+all_steps = [
+    "DownloadHitran",
+    "ReadHitran",
+    "Water183",
+    "Zeeman",
+    "OxygenLM",
+    ]
+all_steps_h = " ".join([f"{x}" for x in all_steps])
 
 parser = argparse.ArgumentParser(description='Run all required updates for the Artscat')
-parser.add_argument('infile', metavar='hitran_file', type=str, help='The path to the latest version of Hitran')
 parser.add_argument('-w', '--working_dir', type=str, help='The path to be generated where generated data is stored', default='./tmp')
+parser.add_argument('-s', '--steps', nargs="+", help=f'Steps to create the catalog (options: [{all_steps_h}])', default=all_steps)
+parser.add_argument('-f', "--hitran_file", type=str, help="Hitran file (created in the working dir if 'DownloadHitran' is an option; never deleted)", default="hitfile")
+parser.add_argument('--hitran_api', type=str, help='Your personal Hitran API key', default=None)
+
+# Trigger options
 parser.add_argument('-d', '--show_diff',action='store_true', help='Show what the update did')
-parser.add_argument('-x', '--skip_hitran', action='store_true', help='Skip reading hitran')
-parser.add_argument('-s', '--skip_steps', help='Skip performing some steps (Reading Hitran is the 1st step)', type=int, default=0)
+parser.add_argument('-c', '--cleanup',action='store_false', help='Remove all non-xml files from the working directory when finished')
 
 args = parser.parse_args()
 
-print(args)
-
 # create local variables
-infile = os.path.abspath(args.infile)
+hitran_file = args.hitran_file
 working_dir = os.path.abspath(args.working_dir)
 show_diff = True if args.show_diff else False
-skip_hitran = True if args.skip_hitran else False
-skip_steps = args.skip_steps
-
-ws = pyarts.workspace.Workspace()
+cleanup = False if args.cleanup else True
+steps = args.steps
+hitran_api = args.hitran_api
 
 # create temporary work directory
 if not os.path.exists(working_dir):
@@ -35,27 +50,35 @@ else:
     assert os.path.isdir(working_dir)
     print (f"Using the working directory: {working_dir}")
 
-# optional skipping of reading Hitran as it takes a long time (in case there's a crash)
-if not skip_hitran and not (skip_steps > 0):
-    print (f"Attempting to read Hitran data from: {infile}")
-    ReadHitran.run(ws, infile, working_dir)
+ws = pyarts.workspace.Workspace()
+
+# Will we download hitran?
+step = check_done_or_return_step(steps)
+if step == "DownloadHitran":
+    hitran_file = os.path.abspath(os.path.join(working_dir, hitran_file))
+    print (f"Attempting to download Hitran data to: {hitran_file}")
+    Hitran.download.run(hitran_file, hitran_api)
+    step = check_done_or_return_step(steps)  # must update step!
 else:
-    skip_steps -= 1
     print ("Attempting to use already prepared Hitran data from the temporary directory")
 
-# create the steps of the changes by naming the subfolders to import and run
-steps = [
-    "Water183",
-    "Zeeman",
-    "OxygenLM",
-    ]
+# Will we read hitran?
+hitran_file = os.path.abspath(hitran_file)
+if step == "ReadHitran":
+    print (f"Attempting to read Hitran data from: {hitran_file}")
+    Hitran.read.run(ws, hitran_file, working_dir)
+    step = check_done_or_return_step(steps)  # must update step!
+else:
+    print ("Attempting to use already prepared Hitran data from the temporary directory")
 
-for step in steps:
-    if skip_steps > 0:
-        skip_steps -= 1
-        print(f"Skipping step: {step}")
-        continue
-    
+while True:
     print(f"Importing step: {step}")
     importlib.import_module(step).run(ws, working_dir, show_diff)
     print(f"Completed step: {step}")
+    
+    step = check_done_or_return_step(steps)
+
+if cleanup:
+    for f in os.listdir(working_dir):
+        if not f.endswith('.xml'):
+            os.remove(os.path.join(working_dir, f))
