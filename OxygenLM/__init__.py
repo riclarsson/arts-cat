@@ -9,7 +9,7 @@ def run(ws, working_dir, show_diff):
     ws.isotopologue_ratiosInitFromBuiltin()
     pyarts.cat.linemixing.init_ecs(ws)
     
-    qid = pyarts.classes.QuantumIdentifier('O2-66 S 1 1 Lambda 0 0 v 0 0 ElecStateLabel X X')
+    qid = pyarts.arts.QuantumIdentifier('O2-66 S 1 1 Lambda 0 0 v 0 0 ElecStateLabel X X')
     
     orig_fn = os.path.join(working_dir, "O2-66.xml")
     assert os.path.exists(orig_fn), f"Cannot find> {orig_fn}"

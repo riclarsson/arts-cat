@@ -9,6 +9,18 @@ import Hitran
 def check_done_or_return_step(steps):
     if len(steps) == 0:
         print("No more steps")
+        
+        print ("Trying to read all the lines")
+        ws = pyarts.workspace.Workspace()
+        ws.abs_speciesDefineAll()
+        print ("The following is the tags read: ", ws.abs_species.value)
+        
+        # Read all available lines (ignore if no lines exist for some Arts species with robust=1)
+        ws.abs_lines_per_speciesReadSpeciesSplitCatalog(basename=working_dir,
+                                                        robust=1)
+        print ("Can read all!")
+
+        print ("Exit with success!")
         exit(0)
     return steps.pop(0)
 

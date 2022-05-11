@@ -241,10 +241,10 @@ def run(fn, api_key=None, molecules=None, fmin=0., fmax=3e20):
         Numeric maximum frequency (Hz).  Min is 0. Max is 3e20 Hz.
 
     """
-    numin = min(max(0, pyarts.pyarts_cpp.convert.freq2kaycm(fmin)), 
-                pyarts.pyarts_cpp.convert.freq2kaycm(3e20))
-    numax = min(max(0, pyarts.pyarts_cpp.convert.freq2kaycm(fmax)), 
-                pyarts.pyarts_cpp.convert.freq2kaycm(3e20))
+    numin = min(max(0, pyarts.arts.convert.freq2kaycm(fmin)), 
+                pyarts.arts.convert.freq2kaycm(3e20))
+    numax = min(max(0, pyarts.arts.convert.freq2kaycm(fmax)), 
+                pyarts.arts.convert.freq2kaycm(3e20))
     if not api_key: raise RuntimeError("Please provide a valid hitran API key")
     print(f"Downloading Hitran data and printing it to {fn}")
     a = open(fn, 'w')

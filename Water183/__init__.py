@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import os
-import pyarts
 
 def run(ws, working_dir, show_diff):
     orig_fn = os.path.join(working_dir, "H2O-161.xml")
